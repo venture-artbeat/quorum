@@ -85,6 +85,17 @@ func (evm *EVM) quorumPrecompile(addr common.Address) (QuorumPrecompiledContract
 	return p, ok
 }
 
+func (evm *EVM) ecPrecompile(addr common.Address) (ECPrecompiledContract, bool) {
+	var ecPrecompiles map[common.Address]ECPrecompiledContract
+	switch {
+	case evm.chainRules.IsECPrecompileEnabled:
+		ecPrecompiles = ECPrecompiledContracts
+	}
+
+	p, ok := ecPrecompiles[addr]
+	return p, ok
+}
+
 // End Quorum
 
 // run runs the given contract and takes care of running precompiles with a fallback to the byte code interpreter.
@@ -304,6 +315,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	snapshot := evm.StateDB.Snapshot()
 	p, isPrecompile := evm.precompile(addr)
 	qp, isQuorumPrecompile := evm.quorumPrecompile(addr) // Quorum
+	ecp, isECPrecompile := evm.ecPrecompile(addr)        // Extended EC operations
 
 	if !evm.StateDB.Exist(addr) {
 		if !isPrecompile && !isQuorumPrecompile && evm.chainRules.IsEIP158 && value.Sign() == 0 {
@@ -345,6 +357,8 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 
 	if isQuorumPrecompile {
 		ret, gas, err = RunQuorumPrecompiledContract(evm, qp, input, gas)
+	} else if isECPrecompile {
+		ret, gas, err = RunECPrecompiledContract(evm, ecp, input, gas)
 	} else if isPrecompile {
 		ret, gas, err = RunPrecompiledContract(p, input, gas)
 	} else {

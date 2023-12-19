@@ -109,6 +109,7 @@ var (
 	PrecompiledAddressesIstanbul  []common.Address
 	PrecompiledAddressesByzantium []common.Address
 	PrecompiledAddressesHomestead []common.Address
+	PrecompiledAddressesEC        []common.Address
 )
 
 func init() {
@@ -123,6 +124,9 @@ func init() {
 	}
 	for k := range PrecompiledContractsBerlin {
 		PrecompiledAddressesBerlin = append(PrecompiledAddressesBerlin, k)
+	}
+	for k := range ECPrecompiledContracts {
+		PrecompiledAddressesEC = append(PrecompiledAddressesEC, k)
 	}
 }
 
@@ -141,6 +145,9 @@ func ActivePrecompiles(rules params.Rules) []common.Address {
 	}
 	if rules.IsPrivacyPrecompile {
 		result = append(result, common.QuorumPrivacyPrecompileContractAddress())
+	}
+	if rules.IsECPrecompileEnabled {
+		result = append(result, PrecompiledAddressesEC...)
 	}
 	return result
 }

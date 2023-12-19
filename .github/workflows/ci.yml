@@ -1,0 +1,177 @@
+name: Test and Lint
+on:
+  push:
+    branches:
+      - master
+      - "ec-precompiles"
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GO_VERSION: "1.19"
+jobs:
+  lint:
+    name: 'Code Linters'
+    runs-on: ubuntu-20.04
+    steps:
+      - name: 'Setup Go (${{ env.GO_VERSION }})'
+        uses: actions/setup-go@v1
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: 'Check Out Project Files'
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+          submodules: false
+      - name: 'Prepare Environment'
+        run: |
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+      - name: 'Lint Code'
+        run: |
+          GO111MODULE=on make lint
+  unit-tests:
+    name: 'Unit Tests'
+    env:
+      QUORUM_IGNORE_TEST_PACKAGES: github.com/ethereum/go-ethereum/les,github.com/ethereum/go-ethereum/les/flowcontrol,github.com/ethereum/go-ethereum/mobile
+    runs-on: ubuntu-20.04
+    steps:
+      - name: 'Setup Go (${{ env.GO_VERSION }})'
+        uses: actions/setup-go@v1
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: 'Check Out Project Files'
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: 'Apply Linux Networking Fix'
+        run: |
+          sudo ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+      - name: 'Run Unit Tests'
+        run: |
+          make test
+  docker-build:
+    name: 'Build Docker Image'
+    runs-on: ubuntu-20.04
+    steps:
+      - name: 'Check Out Project Files'
+        uses: actions/checkout@v2
+      - name: "Build Docker Image"
+        id: build
+        run: |
+          output_dir=${{ runner.temp }}/docker
+          mkdir -p $output_dir
+          docker build -t quorumengineering/quorum:pr .
+          docker save quorumengineering/quorum:pr > quorum-pr.tar
+          tar cfvz $output_dir/quorum-pr.tar.gz quorum-pr.tar
+          echo "::set-output name=output_dir::$output_dir"
+      - name: 'Upload Docker Image'
+        uses: actions/upload-artifact@v2
+        with:
+          name: docker-image
+          path: ${{ steps.build.outputs.output_dir }}
+
+# The PEEPS tests are disabled as they fail on the original repo as well.
+
+  # peeps-tests:
+    # name: 'Run PEEPS Tests'
+    # needs:
+      # - docker-build
+    # runs-on: ubuntu-20.04
+    # steps:
+      # - name: 'Check Out Project Files'
+        # uses: actions/checkout@v2
+      # - name: 'Download Docker Image'
+        # uses: actions/download-artifact@v1
+        # with:
+          # name: docker-image
+      # - name: 'Load Docker Image'
+        # id: setup
+        # run: |
+          # tar xfvz docker-image/quorum-pr.tar.gz
+          # docker load --input quorum-pr.tar
+          # docker image tag quorumengineering/quorum:pr quorumengineering/quorum:develop
+          # docker image ls
+      # - name: Set Up Java
+        # uses: actions/setup-java@v2
+        # with:
+          # distribution: 'adopt'
+          # java-version: 11
+          # check-latest: true
+      # - name: 'Run PEEPS Tests'
+        # run: |
+          # cd build
+          # ./run-peeps.sh
+      # - name: "Generate PEEPS Test Report"
+        # uses: mikepenz/action-junit-report@v2
+        # with:
+          # report_paths: '**/build/test-results/*/TEST-*.xml'
+          # check_name: PEEPS test report
+
+  acceptance-tests:
+    name: Acceptance Tests
+    needs:
+      - docker-build
+    strategy:
+      fail-fast: false
+      matrix:
+        # The list of acceptance test expressions to be executed in parallel
+        tag:
+          - 'basic || basic-raft || (advanced && raft) || networks/typical::raft'
+          - 'basic || basic-istanbul || (advanced && istanbul) || empty-block-period || networks/typical::istanbul'
+          - 'basic || basic-istanbul || (advanced && istanbul) || empty-block-period || block-reward || networks/typical::qbft'
+          - 'gcmode && block-sync && networks/template::raft-3plus1'
+          - 'gcmode && block-sync && networks/template::istanbul-3plus1'
+          - 'gcmode && block-sync && networks/template::qbft-3plus1'
+          - 'learner-peer-management || raftdnsenable && networks/template::raft-3plus1'
+          - 'validator-management && networks/template::qbft-3plus1'
+          - 'validator-management && networks/template::istanbul-3plus1'
+          - 'qbft-transition-network && networks/template::qbft-4nodes-transition'
+          - 'migration && networks/template::raft-4nodes'
+          - 'migration && networks/template::istanbul-4nodes'
+          - 'migration && networks/template::raft-4nodes-ancientdb'
+          - 'migration && networks/template::istanbul-4nodes-ancientdb'
+          - 'permissions-v1 && networks/template::raft-3plus1'
+          - 'permissions-v2 && networks/template::raft-3plus1'
+          - 'privacy-enhancements-upgrade || networks/template::raft-4nodes-pe'
+          - 'basic || basic-raft || (advanced && raft) || networks/typical::raft-simple-mps'
+          - 'basic || basic-istanbul || (advanced && istanbul) || networks/typical::qbft-simple-mps'
+          - 'basic || basic-istanbul || (advanced && istanbul) || networks/typical::istanbul-simple-mps'
+          - 'basic || networks/typical::raftmps'
+          - 'basic || networks/typical::qbftmps'
+          - 'basic || networks/typical::istanbulmps'
+          - 'mps-upgrade-txtrace || networks/template::raft-4nodes-mps'
+          - 'mps-upgrade-txtrace || networks/template::istanbul-4nodes-mps'
+          - 'mps-mixed-network-psr-check || networks/template::raft-4nodes-mps-mixed'
+          - 'mps-mixed-network-psr-check || networks/template::istanbul-4nodes-mps-mixed'
+    runs-on: ubuntu-20.04
+    steps:
+      - name: 'Download Docker Image'
+        uses: actions/download-artifact@v1
+        with:
+          name: docker-image
+      - name: 'Load Docker Image'
+        id: setup
+        run: |
+          tar xfvz docker-image/quorum-pr.tar.gz
+          docker load --input quorum-pr.tar
+          docker_env_file="${{ runner.temp }}/env.list"
+          echo "TF_VAR_quorum_docker_image={ name = \"quorumengineering/quorum:pr\", local = true }" >> $docker_env_file
+          echo "::set-output name=outputDir::${{ runner.temp }}"
+          echo "::set-output name=dockerEnvFile::$docker_env_file"
+      - name: 'Run Acceptance Tests'
+        run: |
+          cat ${{ steps.setup.outputs.dockerEnvFile }}
+          docker run --rm \
+            --network host \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v ${{ steps.setup.outputs.outputDir }}:${{ steps.setup.outputs.outputDir }} \
+            --env-file ${{ steps.setup.outputs.dockerEnvFile }} \
+            quorumengineering/acctests:latest test \
+              -Pauto \
+              -Dauto.outputDir=${{ steps.setup.outputs.outputDir }} \
+              -Dtags="${{ matrix.tag }}"
+
