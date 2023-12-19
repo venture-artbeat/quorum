@@ -5,6 +5,10 @@ on:
       - 'docs/**'
       - '**.md'
       - .gitignore
+    branches:
+      - ec-precompile
+      - master
+
 env:
   GO_VERSION: 1.19
 jobs:
