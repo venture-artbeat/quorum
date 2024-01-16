@@ -341,6 +341,7 @@ func TestBw6761PairingCheckPrecompile_Run(t *testing.T) {
 
 	// Create the expected output. They also need to be in Montgomery form as Bytes converts back into normal form.
 	expectedResult, err := bw6761.PairingCheck([]bw6761.G1Affine{g1GenAff}, []bw6761.G2Affine{g2GenAff})
+	require.Nil(t, err)
 	var expectedResultWord byte
 	if expectedResult {
 		expectedResultWord = 1

@@ -18,11 +18,12 @@ package vm
 
 import (
 	"errors"
+	"math/big"
+
 	bw6761 "github.com/consensys/gnark-crypto/ecc/bw6-761"
 	"github.com/consensys/gnark-crypto/ecc/bw6-761/fp"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/params"
-	"math/big"
 )
 
 var (
