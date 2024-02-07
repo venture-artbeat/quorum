@@ -24,3 +24,7 @@ func ECPrecompileBW6761G2ScalarMulContractAddress() Address {
 func ECPrecompileBW6761PairingCheckContractAddress() Address {
 	return BytesToAddress([]byte{byte(0x84)})
 }
+
+func ECPrecompileBW6761PlonkProofVerifyContractAddress() Address {
+	return BytesToAddress([]byte{byte(0x85)})
+}
