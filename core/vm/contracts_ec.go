@@ -84,7 +84,7 @@ func RunECPrecompiledContract(evm *EVM, precompile ECPrecompiledContract, input 
 }
 
 // bw6761PlonkProofVerifyPrecompile implements the verification of a given PlonK proof. It is assumed that the proof
-// was generated using BW6-761 curve.
+// was generated using the BW6-761 curve.
 //
 // The input is assumed to encode, in the following order:
 // - a PlonK proof of a circuit,
@@ -93,14 +93,19 @@ func RunECPrecompiledContract(evm *EVM, precompile ECPrecompiledContract, input 
 //
 // All the above components must be generated for the same circuit definition, over the BW6-761 finite field.
 //
+// Gnark version used by the proving service MUST BE the same as the one used by Quorum. The binary representation
+// of the serialized objects is Gnark's internal implementation detail. No assumptions can be made about the byte-level
+// structure of the input buffer. The only way of making sure the buffer is structured correctly is to maintain the
+// order of the objects and keep Gnark versions synchronized among the interfacing projects.
+//
 // Example of serializing the objects into a single input buffer:
 //
-//	    // Assuming proof, verifyingKey and publicWitness were generated properly
+//	  // Assuming proof, verifyingKey and publicWitness were generated properly
 //		var buf bytes.Buffer
 //		proof.WriteTo(&buf)
 //		verifyingKey.WriteTo(&buf)
 //		publicWitness.WriteTo(&buf)
-//	    // at this point buf contains all the objects and can be turned into []byte with buf.Bytes()
+//	  // at this point buf contains all the objects and can be turned into []byte with buf.Bytes()
 type bw6761PlonkProofVerifyPrecompile struct{}
 
 func (*bw6761PlonkProofVerifyPrecompile) RequiredGas(input []byte) uint64 {
