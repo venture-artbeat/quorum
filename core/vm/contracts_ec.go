@@ -17,11 +17,18 @@
 package vm
 
 import (
+	"bytes"
 	"errors"
 	"math/big"
 
+	"github.com/consensys/gnark-crypto/ecc"
 	bw6761 "github.com/consensys/gnark-crypto/ecc/bw6-761"
 	"github.com/consensys/gnark-crypto/ecc/bw6-761/fp"
+	fr_bw6761 "github.com/consensys/gnark-crypto/ecc/bw6-761/fr"
+	"github.com/consensys/gnark/backend/plonk"
+	plonk_bw6761 "github.com/consensys/gnark/backend/plonk/bw6-761"
+	"github.com/consensys/gnark/backend/witness"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/params"
 )
@@ -47,11 +54,12 @@ type ECPrecompiledContract interface {
 // ECPrecompiledContracts is the default set of pre-compiled contracts that implement extended support for elliptic
 // curves.
 var ECPrecompiledContracts = map[common.Address]ECPrecompiledContract{
-	common.ECPrecompileBW6761G1AddContractAddress():        &bw6761G1AddPrecompile{},
-	common.ECPrecompileBW6761G1ScalarMulContractAddress():  &bw6761G1ScalarMulPrecompile{},
-	common.ECPrecompileBW6761G2AddContractAddress():        &bw6761G2AddPrecompile{},
-	common.ECPrecompileBW6761G2ScalarMulContractAddress():  &bw6761G2ScalarMulPrecompile{},
-	common.ECPrecompileBW6761PairingCheckContractAddress(): &bw6761PairingCheckPrecompile{},
+	common.ECPrecompileBW6761G1AddContractAddress():            &bw6761G1AddPrecompile{},
+	common.ECPrecompileBW6761G1ScalarMulContractAddress():      &bw6761G1ScalarMulPrecompile{},
+	common.ECPrecompileBW6761G2AddContractAddress():            &bw6761G2AddPrecompile{},
+	common.ECPrecompileBW6761G2ScalarMulContractAddress():      &bw6761G2ScalarMulPrecompile{},
+	common.ECPrecompileBW6761PairingCheckContractAddress():     &bw6761PairingCheckPrecompile{},
+	common.ECPrecompileBW6761PlonkProofVerifyContractAddress(): &bw6761PlonkProofVerifyPrecompile{},
 }
 
 // RunECPrecompiledContract executes and evaluates the output of an elliptic curve precompiled contract.
@@ -61,7 +69,9 @@ var ECPrecompiledContracts = map[common.Address]ECPrecompiledContract{
 //   - remainingGas: The gas that remains from the `suppliedGas` after the precompiled contract's gas cost has been
 //     deducted.
 //   - err: Any error that may have occurred during execution.
-func RunECPrecompiledContract(evm *EVM, precompile ECPrecompiledContract, input []byte, suppliedGas uint64) (ret []byte, remainingGas uint64, err error) {
+func RunECPrecompiledContract(evm *EVM, precompile ECPrecompiledContract, input []byte, suppliedGas uint64) (
+	ret []byte, remainingGas uint64, err error,
+) {
 	gasCost := precompile.RequiredGas(input)
 	if suppliedGas < gasCost {
 		return nil, 0, ErrOutOfGas
@@ -71,6 +81,66 @@ func RunECPrecompiledContract(evm *EVM, precompile ECPrecompiledContract, input 
 
 	output, err := precompile.Run(evm, input)
 	return output, suppliedGas, err
+}
+
+// bw6761PlonkProofVerifyPrecompile implements the verification of a given PlonK proof. It is assumed that the proof
+// was generated using the BW6-761 curve.
+//
+// The input is assumed to encode, in the following order:
+// - a PlonK proof of a circuit,
+// - a verifying key for the proof,
+// - a public witness suitable for verifying the proof.
+//
+// All the above components must be generated for the same circuit definition, over the BW6-761 finite field.
+//
+// Gnark version used by the proving service MUST BE the same as the one used by Quorum. The binary representation
+// of the serialized objects is Gnark's internal implementation detail. No assumptions can be made about the byte-level
+// structure of the input buffer. The only way of making sure the buffer is structured correctly is to maintain the
+// order of the objects and keep Gnark versions synchronized among the interfacing projects.
+//
+// Example of serializing the objects into a single input buffer:
+//
+//	  // Assuming proof, verifyingKey and publicWitness were generated properly
+//		var buf bytes.Buffer
+//		proof.WriteTo(&buf)
+//		verifyingKey.WriteTo(&buf)
+//		publicWitness.WriteTo(&buf)
+//	  // at this point buf contains all the objects and can be turned into []byte with buf.Bytes()
+type bw6761PlonkProofVerifyPrecompile struct{}
+
+func (*bw6761PlonkProofVerifyPrecompile) RequiredGas(input []byte) uint64 {
+	return params.Bw6761PlonkProofVerifyGas
+}
+
+func (*bw6761PlonkProofVerifyPrecompile) Run(evm *EVM, input []byte) ([]byte, error) {
+	inputBytes := bytes.NewBuffer(input)
+
+	proof := plonk.NewProof(ecc.BW6_761)
+	_, err := proof.ReadFrom(inputBytes)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	vk := plonk.NewVerifyingKey(ecc.BW6_761)
+	_, err = vk.ReadFrom(inputBytes)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	w, err := witness.New(ecc.BW6_761.ScalarField())
+	if err != nil {
+		return []byte{}, err
+	}
+
+	_, err = w.ReadFrom(inputBytes)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	// Empty buffer is returned for API compatibility
+	return []byte{}, plonk_bw6761.Verify(
+		proof.(*plonk_bw6761.Proof), vk.(*plonk_bw6761.VerifyingKey), w.Vector().(fr_bw6761.Vector),
+	)
 }
 
 // bw6761G1AddPrecompile implements the addition of G1 affine points where each coordinate is a 3-word field element.

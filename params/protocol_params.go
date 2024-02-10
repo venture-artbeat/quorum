@@ -143,11 +143,12 @@ const (
 	Bls12381MapG1Gas          uint64 = 5500   // Gas price for BLS12-381 mapping field element to G1 operation
 	Bls12381MapG2Gas          uint64 = 110000 // Gas price for BLS12-381 mapping field element to G2 operation
 
-	Bw6761G1AddGas   uint64 = 600   // Price for BW6-761 elliptic curve G1 point addition
-	Bw6761G1MulGas   uint64 = 12000 // Price for BW6-761 elliptic curve G1 point scalar multiplication
-	Bw6761G2AddGas   uint64 = 4500  // Price for BW6-761 elliptic curve G2 point addition
-	Bw6761G2MulGas   uint64 = 55000 // Price for BW6-761 elliptic curve G2 point scalar multiplication
-	Bw6761PairingGas uint64 = 23000 // Price for BW6-761 elliptic curve pairing check
+	Bw6761G1AddGas            uint64 = 600   // Price for BW6-761 elliptic curve G1 point addition
+	Bw6761G1MulGas            uint64 = 12000 // Price for BW6-761 elliptic curve G1 point scalar multiplication
+	Bw6761G2AddGas            uint64 = 4500  // Price for BW6-761 elliptic curve G2 point addition
+	Bw6761G2MulGas            uint64 = 55000 // Price for BW6-761 elliptic curve G2 point scalar multiplication
+	Bw6761PlonkProofVerifyGas uint64 = 21000 // Price for BW6-761 elliptic curve PlonK proof verification
+	Bw6761PairingGas          uint64 = 23000 // Price for BW6-761 elliptic curve pairing check
 
 	QuorumMaximumExtraDataSize uint64 = 65 // Maximum size extra data may be after Genesis.
 	// Quorum - payload for a transaction, the size of the buffer to 128kb to match the maximum allowed in chain config

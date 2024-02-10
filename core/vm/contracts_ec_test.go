@@ -1,18 +1,66 @@
 package vm
 
 import (
-	"testing"
-
+	"bytes"
 	"math/big"
+	"os"
+	"testing"
 
 	bw6761 "github.com/consensys/gnark-crypto/ecc/bw6-761"
 	"github.com/consensys/gnark-crypto/ecc/bw6-761/fp"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
 )
+
+func TestBw6761PlonkProofVerifyPrecompile_RequiredGas(t *testing.T) {
+	input := make([]byte, 0)
+	requiredGas := (&bw6761PlonkProofVerifyPrecompile{}).RequiredGas(input)
+	require.Equal(t, requiredGas, params.Bw6761PlonkProofVerifyGas)
+}
+
+func TestBw6761PlonkProofVerifyPrecompile_Run(t *testing.T) {
+	// Set up the test controller and make sure it runs cleanup
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+
+	// Build our test transaction
+	g1AddTx := types.NewTransaction(0, common.ECPrecompileBW6761G1AddContractAddress(), nil, 0, nil, []byte{})
+	require.Equal(t, *g1AddTx.To(), common.ECPrecompileBW6761G1AddContractAddress())
+
+	// Set up the EVM state
+	publicState := NewMockStateDB(controller)
+	depth := 1
+	evm := &EVM{
+		depth:        depth,
+		currentTx:    g1AddTx,
+		publicState:  publicState,
+		privateState: publicState,
+	}
+
+	// Set up the inputs
+	f, err := os.Open("testdata/precompiles/serializedProofVkWitness.bin")
+	if err != nil {
+		t.Fatalf("cannot open serialized proof/vk/witness file: %v", err)
+	}
+	defer f.Close()
+	var inputBytes bytes.Buffer
+	_, err = inputBytes.ReadFrom(f)
+	if err != nil {
+		t.Fatalf("cannot read serialized proof/vk/witness file to buffer: %v", err)
+	}
+
+	// Run the precompile
+	retData, err := (&bw6761PlonkProofVerifyPrecompile{}).Run(evm, inputBytes.Bytes())
+	require.Nil(t, err)
+
+	// Check the returned value is correct
+	require.Equal(t, len(retData), len([]byte{}))
+	require.Equal(t, retData, []byte{})
+}
 
 func TestBw6761G1AddPrecompile_RequiredGas(t *testing.T) {
 	input := make([]byte, 0)
