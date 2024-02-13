@@ -30,6 +30,7 @@ import (
 	"github.com/consensys/gnark/backend/witness"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 )
 
@@ -118,29 +119,41 @@ func (*bw6761PlonkProofVerifyPrecompile) Run(evm *EVM, input []byte) ([]byte, er
 	proof := plonk.NewProof(ecc.BW6_761)
 	_, err := proof.ReadFrom(inputBytes)
 	if err != nil {
+		log.Error("Proof verification: Reading proof", "error", err)
 		return []byte{}, err
 	}
 
 	vk := plonk.NewVerifyingKey(ecc.BW6_761)
 	_, err = vk.ReadFrom(inputBytes)
 	if err != nil {
+		log.Error("Proof verification: Reading vk", "error", err)
 		return []byte{}, err
 	}
 
 	w, err := witness.New(ecc.BW6_761.ScalarField())
 	if err != nil {
+		log.Error("Proof verification: Creating witness", "error", err)
 		return []byte{}, err
 	}
 
 	_, err = w.ReadFrom(inputBytes)
 	if err != nil {
+		log.Error("Proof verification: Reading witness", "error", err)
 		return []byte{}, err
 	}
 
 	// Empty buffer is returned for API compatibility
-	return []byte{}, plonk_bw6761.Verify(
+	err = plonk_bw6761.Verify(
 		proof.(*plonk_bw6761.Proof), vk.(*plonk_bw6761.VerifyingKey), w.Vector().(fr_bw6761.Vector),
 	)
+	if err != nil {
+		log.Error("Proof verification: Verifying proof", "error", err)
+		return []byte{}, err
+	}
+
+	log.Debug("Proof verification successful")
+
+	return []byte{}, nil
 }
 
 // bw6761G1AddPrecompile implements the addition of G1 affine points where each coordinate is a 3-word field element.
