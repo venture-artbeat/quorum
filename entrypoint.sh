@@ -26,4 +26,4 @@ sed -i "s|<NODE2_IP>|$NODE2_IP|g" /root/.ethereum/geth/static-nodes.json
 export PRIVATE_CONFIG=ignore
 export ADDRESS=$(grep -o '"address": *"[^"]*"' ./root/.ethereum/geth/keystore/accountKeystore | grep -o '"[^"]*"$' | sed 's/"//g')
 
-geth --mine  --miner.threads 1 --verbosity 5 --nodiscover --http --http.port 8546 --http.addr 0.0.0.0 --port 30304 --http.corsdomain "*" --http.vhosts "*" --nat "any" --http.api eth,web3,personal,net,miner --unlock ${ADDRESS} --password /root/.ethereum/geth/keystore/accountPassword --keystore ./root/.ethereum/geth/keystore --nodekey /root/.ethereum/geth/nodekey --ipcpath geth.ipc --allow-insecure-unlock --nat=extip:127.0.0.1
+geth --mine  --miner.threads 1 --verbosity 5 --nodiscover --http --http.port 8546 --http.addr 0.0.0.0 --port 30303 --http.corsdomain "*" --http.vhosts "*" --nat "any" --http.api eth,web3,personal,net,miner --unlock ${ADDRESS} --password /root/.ethereum/geth/keystore/accountPassword --keystore ./root/.ethereum/geth/keystore --nodekey /root/.ethereum/geth/nodekey --ipcpath geth.ipc --allow-insecure-unlock 
