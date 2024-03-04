@@ -1,0 +1,130 @@
+name: deploy blockchain development precompile nodes
+
+env:
+  AWS_REGION: eu-central-1
+  ECR_REPOSITORY: blockchain-precompile-nodes
+  ECS_CLUSTER: artbeat-cluster-development
+on:
+  workflow_dispatch
+
+jobs:
+  deploy:
+    name: deploy blockchain development precompile-nodes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile-Dev .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Configure AWS Credentials for deployment
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_CI }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_CI }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_DEVELOPMENT_CI }}
+          role-duration-seconds: 1200
+          role-skip-session-tagging: true
+
+      - name: NODE 1 - Fill in the new image ID in the Amazon ECS task definition
+        id: task-def-node1
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ./.github/aws/development/task-definition-precompile-node-1-dev.json
+          container-name: artbeat-quorum-precompile-node-1-container-development
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: NODE 2 - Fill in the new image ID in the Amazon ECS task definition
+        id: task-def-node2
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ./.github/aws/development/task-definition-precompile-node-2-dev.json
+          container-name: artbeat-quorum-precompile-node-2-container-development
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: NODE 3 - Fill in the new image ID in the Amazon ECS task definition
+        id: task-def-node3
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ./.github/aws/development/task-definition-precompile-node-3-dev.json
+          container-name: artbeat-quorum-precompile-node-3-container-development
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: NODE 4 - Fill in the new image ID in the Amazon ECS task definition
+        id: task-def-node4
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ./.github/aws/development/task-definition-precompile-node-4-dev.json
+          container-name: artbeat-quorum-precompile-node-4-container-development
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: NODE 5 - Fill in the new image ID in the Amazon ECS task definition
+        id: task-def-node5
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ./.github/aws/development/task-definition-precompile-node-5-dev.json
+          container-name: artbeat-quorum-precompile-node-5-container-development
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: Deploy NODE 1 Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def-node1.outputs.task-definition }}
+          service: artbeat-quorum-precompile-node-1-development
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Deploy NODE 2 to Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def-node2.outputs.task-definition }}
+          service: artbeat-quorum-precompile-node-2-development
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Deploy NODE 3 Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def-node3.outputs.task-definition }}
+          service: artbeat-quorum-precompile-node-3-development
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Deploy NODE 4 Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def-node4.outputs.task-definition }}
+          service: artbeat-quorum-precompile-node-4-development
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Deploy NODE 5 Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def-node5.outputs.task-definition }}
+          service: artbeat-quorum-precompile-node-5-development
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
