@@ -53,7 +53,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: ./.github/aws/development/task-definition-precompile-node-1-dev.json
-          container-name: artbeat-quorum-precompile-node-1-container-development
+          container-name: artbeat-blockchain-precompile-node-1-container-development
           image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
 
       - name: NODE 2 - Fill in the new image ID in the Amazon ECS task definition
@@ -61,7 +61,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: ./.github/aws/development/task-definition-precompile-node-2-dev.json
-          container-name: artbeat-quorum-precompile-node-2-container-development
+          container-name: artbeat-blockchain-precompile-node-2-container-development
           image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
 
       - name: NODE 3 - Fill in the new image ID in the Amazon ECS task definition
@@ -69,7 +69,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: ./.github/aws/development/task-definition-precompile-node-3-dev.json
-          container-name: artbeat-quorum-precompile-node-3-container-development
+          container-name: artbeat-blockchain-precompile-node-3-container-development
           image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
 
       - name: NODE 4 - Fill in the new image ID in the Amazon ECS task definition
@@ -77,7 +77,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: ./.github/aws/development/task-definition-precompile-node-4-dev.json
-          container-name: artbeat-quorum-precompile-node-4-container-development
+          container-name: artbeat-blockchain-precompile-node-4-container-development
           image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
 
       - name: NODE 5 - Fill in the new image ID in the Amazon ECS task definition
@@ -85,14 +85,14 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: ./.github/aws/development/task-definition-precompile-node-5-dev.json
-          container-name: artbeat-quorum-precompile-node-5-container-development
+          container-name: artbeat-blockchain-precompile-node-5-container-development
           image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
 
       - name: Deploy NODE 1 Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def-node1.outputs.task-definition }}
-          service: artbeat-quorum-precompile-node-1-development
+          service: artbeat-blockchain-precompile-node-1-development
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
 
@@ -100,7 +100,7 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def-node2.outputs.task-definition }}
-          service: artbeat-quorum-precompile-node-2-development
+          service: artbeat-blockchain-precompile-node-2-development
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
 
@@ -108,7 +108,7 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def-node3.outputs.task-definition }}
-          service: artbeat-quorum-precompile-node-3-development
+          service: artbeat-blockchain-precompile-node-3-development
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
 
@@ -116,7 +116,7 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def-node4.outputs.task-definition }}
-          service: artbeat-quorum-precompile-node-4-development
+          service: artbeat-blockchain-precompile-node-4-development
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
 
@@ -124,7 +124,7 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def-node5.outputs.task-definition }}
-          service: artbeat-quorum-precompile-node-5-development
+          service: artbeat-blockchain-precompile-node-5-development
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
 

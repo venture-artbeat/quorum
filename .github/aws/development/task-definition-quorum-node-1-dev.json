@@ -1,87 +1,91 @@
 {
-  "containerDefinitions": [
-      {
-          "name": "artbeat-quorum-precompile-node-1-container-development",
-          "image": "quorum-precompile-node:latest",
-          "portMappings": [
-              {
-                  "containerPort": 8545,
-                  "hostPort": 8545,
-                  "protocol": "tcp"
-              },
-              {
-                  "containerPort": 30303,
-                  "hostPort": 30303,
-                  "protocol": "tcp"
-              },
-              {
-                  "containerPort": 30303,
-                  "hostPort": 30303,
-                  "protocol": "udp"
-              }
-          ],
-          "essential": true,
-          "environment": [
-              {
-                "name": "RESET",
-                "value": "<reset>"
-              },
-              {
-                  "name": "NODE1_IP",
-                  "value": "quorum-precompile-node-1-development.artbeat.ecs"
-              },
-              {
-                  "name": "NODE4_IP",
-                  "value": "quorum-precompile-node-4-development.artbeat.ecs"
-              },
-              {
-                  "name": "NODE2_IP",
-                  "value": "quorum-precompile-node-2-development.artbeat.ecs"
-              },
-              {
-                  "name": "NODE3_IP",
-                  "value": "quorum-precompile-node-3-development.artbeat.ecs"
-              },
-              {
-                  "name": "NODE5_IP",
-                  "value": "quorum-precompile-node-5-development.artbeat.ecs"
-              },
-              {
-                  "name": "NODE_INDEX",
-                  "value": "1"
-              }
-          ],
-          "mountPoints": [
-              {
-                  "sourceVolume": "efs-ethereum",
-                  "containerPath": "/root/.ethereum"
-              }
-          ],
-          "volumesFrom": [],
-          "logConfiguration": {
-              "logDriver": "awslogs",
-              "options": {
-                  "awslogs-group": "/ecs/artbeat-quorum-precompile-node-1-task-development",
-                  "awslogs-region": "eu-central-1",
-                  "awslogs-stream-prefix": "ecs"
-              }
-          }
-      }
-  ],
-  "family": "artbeat-quorum-precompile-node-1-task-development",
-  "taskRoleArn": "arn:aws:iam::725129422558:role/artbeat-ecsTaskRole",
-  "executionRoleArn": "arn:aws:iam::725129422558:role/artbeat-ecsTaskExecutionRole",
-  "networkMode": "awsvpc",
-  "volumes": [
-      {
-          "name": "efs-ethereum",
-          "efsVolumeConfiguration": {
-              "fileSystemId": "     ",
-              "rootDirectory": "/"
-          }
-      }
-  ],
-  "placementConstraints": [],
-  "cpu": "1024",
-  "memory": "2048"
+    "containerDefinitions": [
+        {
+            "name": "artbeat-blockchain-precompile-node-1-container-development",
+            "image": "blockchain-precompile-node:latest",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "containerPort": 8545,
+                    "hostPort": 8545,
+                    "protocol": "tcp"
+                },
+                {
+                    "containerPort": 30303,
+                    "hostPort": 30303,
+                    "protocol": "tcp"
+                },
+                {
+                    "containerPort": 30303,
+                    "hostPort": 30303,
+                    "protocol": "udp"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "NODE1_IP",
+                    "value": "quorum-precompile-node-1-development.artbeat.ecs"
+                },
+                {
+                    "name": "NODE4_IP",
+                    "value": "quorum-precompile-node-4-development.artbeat.ecs"
+                },
+                {
+                    "name": "NODE2_IP",
+                    "value": "quorum-precompile-node-2-development.artbeat.ecs"
+                },
+                {
+                    "name": "NODE3_IP",
+                    "value": "quorum-precompile-node-3-development.artbeat.ecs"
+                },
+                {
+                    "name": "NODE5_IP",
+                    "value": "quorum-precompile-node-5-development.artbeat.ecs"
+                },
+                {
+                    "name": "NODE_INDEX",
+                    "value": "1"
+                }
+            ],
+            "mountPoints": [
+                {
+                    "sourceVolume": "efs-ethereum",
+                    "containerPath": "/root/.ethereum"
+                }
+            ],
+            "volumesFrom": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/artbeat-blockchain-precompile-node-1-task-development",
+                    "awslogs-region": "eu-central-1",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            },
+            "systemControls": []
+        }
+    ],
+    "family": "artbeat-blockchain-precompile-node-1-task-development",
+    "taskRoleArn": "arn:aws:iam::725129422558:role/artbeat-ecsTaskRole",
+    "executionRoleArn": "arn:aws:iam::725129422558:role/artbeat-ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "revision": 1,
+    "volumes": [
+        {
+            "name": "efs-ethereum",
+            "efsVolumeConfiguration": {
+                "fileSystemId": "fs-0044d6b1454f4bdbe",
+                "rootDirectory": "/"
+            }
+        }
+    ],
+    "status": "ACTIVE",
+    "placementConstraints": [],
+    "compatibilities": [
+        "EC2",
+        "FARGATE"
+    ],
+    "cpu": "1024",
+    "memory": "2048"
 }

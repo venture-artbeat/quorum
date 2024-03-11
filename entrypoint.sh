@@ -37,4 +37,9 @@ sed -i "s|<NODE5_IP>|$NODE5_IP|g" /root/.ethereum/geth/static-nodes.json
 export PRIVATE_CONFIG=ignore
 export ADDRESS=$(grep -o '"address": *"[^"]*"' ./root/.ethereum/geth/keystore/accountKeystore | grep -o '"[^"]*"$' | sed 's/"//g')
 
-geth --mine  --miner.threads 1 --verbosity 3 --nodiscover --http --http.port 8546 --http.addr 0.0.0.0 --port 30303 --http.corsdomain "*" --http.vhosts "*" --nat "any" --http.api eth,web3,personal,net,miner --unlock ${ADDRESS} --password /root/.ethereum/geth/keystore/accountPassword --keystore ./root/.ethereum/geth/keystore --nodekey /root/.ethereum/geth/nodekey --ipcpath geth.ipc --allow-insecure-unlock 
+geth --mine  --miner.threads 1 --verbosity 3 --nodiscover \
+     --http --http.api admin,debug,eth,net,web3 --http.port 8545 --http.addr 0.0.0.0 --port 30303 --http.corsdomain "*" --http.vhosts "*" \
+     --ws --ws.api admin,eth,debug,web3,personal,net,miner --ws.addr 0.0.0.0 --ws.port 8546 --ws.origins '*' --ws.api eth,net,web3 \
+     --unlock ${ADDRESS} --password /root/.ethereum/geth/keystore/accountPassword \
+     --keystore ./root/.ethereum/geth/keystore --nodekey /root/.ethereum/geth/nodekey \
+     --ipcpath geth.ipc --allow-insecure-unlock 
