@@ -1,0 +1,82 @@
+version: '3'
+services:
+  node1:
+    build: 
+      context: .
+      dockerfile: ./Dockerfile-Local
+    container_name: node1
+    expose:
+      - "30303"
+    ports:
+      - '8545:8545'
+    environment:
+      NODE_INDEX: 1
+      NODE1_IP: node1
+      NODE2_IP: node2
+
+  
+  node2:
+    build: 
+      context: .
+      dockerfile: ./Dockerfile-Local
+    container_name: node2
+    expose:
+      - "30303"
+    environment:
+      NODE_INDEX: 2
+      NODE1_IP: node1
+      NODE2_IP: node2
+
+    depends_on:
+      - node1
+
+  node3:
+    build: 
+      context: .
+      dockerfile: ./Dockerfile-Local
+    container_name: node3
+    expose:
+      - "30303"
+    environment:
+      NODE_INDEX: 3
+      NODE1_IP: node1
+      NODE2_IP: node2
+      NODE3_IP: node3
+      NODE4_IP: node4
+      NODE5_IP: node5
+    depends_on:
+      - node1
+
+  node4:
+    build: 
+      context: .
+      dockerfile: ./Dockerfile-Local
+    container_name: node4
+    expose:
+      - "30303"
+    environment:
+      NODE_INDEX: 4
+      NODE1_IP: node1
+      NODE2_IP: node2
+      NODE3_IP: node3
+      NODE4_IP: node4
+      NODE5_IP: node5
+    depends_on:
+      - node1
+
+  node5:
+    build: 
+      context: .
+      dockerfile: ./Dockerfile-Local
+    container_name: node5
+    expose:
+      - "30303"
+    environment:
+      NODE_INDEX: 5
+      NODE1_IP: node1
+      NODE2_IP: node2
+      NODE3_IP: node3
+      NODE4_IP: node4
+      NODE5_IP: node5
+    depends_on:
+      - node1
